@@ -103,7 +103,7 @@ class OutlierProphet(BaseDetector, FitMixin):
             'mcmc_samples': mcmc_samples
         }
         self.model = Prophet(**kwargs)
-        model.stan_backend.logger = None
+        self.model.stan_backend.logger = None
         if country_holidays:
             self.model.add_country_holidays(country_name=country_holidays)
         if add_seasonality:
