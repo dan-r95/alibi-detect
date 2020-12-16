@@ -33,6 +33,7 @@
    :caption: Adversarial Detection
    
    methods/adversarialae.ipynb
+   methods/modeldistillation.ipynb
    
 .. toctree::
    :maxdepth: 1
@@ -44,7 +45,8 @@
 .. toctree::
    :maxdepth: 1
    :caption: Examples
-
+    
+   examples/alibi_detect_deploy
    examples/od_mahalanobis_kddcup
    examples/od_if_kddcup
    examples/od_vae_kddcup
@@ -58,8 +60,10 @@
    examples/od_seq2seq_synth
    examples/od_seq2seq_ecg
    examples/ad_ae_cifar10
+   examples/cd_distillation_cifar10
    examples/cd_ks_cifar10
    examples/cd_mmd_cifar10
+   examples/cd_text_imdb
    
 .. toctree::
    :maxdepth: 1

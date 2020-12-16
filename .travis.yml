@@ -11,9 +11,12 @@ install:
   - pip install -r requirements/requirements.txt
   - pip install -r requirements/requirements_ci.txt
   - pip install -e .
+  - pip freeze
 script:
   - flake8 alibi_detect
   - mypy alibi_detect
+  - make licenses
+  - make check_licenses
   - travis_wait pytest
   - make build_pypi
   - make build_docs

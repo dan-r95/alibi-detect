@@ -5,9 +5,9 @@ from tempfile import TemporaryDirectory
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, InputLayer
 from typing import Callable
-from alibi_detect.ad import AdversarialAE
+from alibi_detect.ad import AdversarialAE, ModelDistillation
 from alibi_detect.cd import KSDrift, MMDDrift
-from alibi_detect.cd.preprocess import uae
+from alibi_detect.cd.preprocess import UAE
 from alibi_detect.models.autoencoder import DecoderLSTM, EncoderLSTM
 from alibi_detect.od import (IForest, LLR, Mahalanobis, OutlierAEGMM, OutlierVAE, OutlierVAEGMM,
                              OutlierProphet, SpectralResidual, OutlierSeq2Seq, OutlierAE)
@@ -42,6 +42,8 @@ decoder_net = tf.keras.Sequential(
 kwargs = {'encoder_net': encoder_net,
           'decoder_net': decoder_net}
 
+preprocess_kwargs = {'model': UAE(encoder_net=encoder_net)}
+
 gmm_density_net = tf.keras.Sequential(
     [
         InputLayer(input_shape=(latent_dim + 2,)),
@@ -66,6 +68,9 @@ detector = [
     AdversarialAE(threshold=threshold,
                   model=model,
                   **kwargs),
+    ModelDistillation(threshold=threshold,
+                      model=model,
+                      distilled_model=model),
     IForest(threshold=threshold),
     LLR(threshold=threshold, model=model),
     Mahalanobis(threshold=threshold),
@@ -97,12 +102,12 @@ detector = [
                    latent_dim=latent_dim),
     KSDrift(p_val=p_val,
             X_ref=X_ref,
-            preprocess_fn=uae,
-            preprocess_kwargs={'encoder_net': encoder_net}),
+            preprocess_X_ref=False,
+            preprocess_kwargs=preprocess_kwargs),
     MMDDrift(p_val=p_val,
              X_ref=X_ref,
-             preprocess_fn=uae,
-             preprocess_kwargs={'encoder_net': encoder_net},
+             preprocess_X_ref=False,
+             preprocess_kwargs=preprocess_kwargs,
              n_permutations=10,
              chunk_size=10)
 ]
@@ -127,7 +132,10 @@ def test_save_load(select_detector):
     with TemporaryDirectory() as temp_dir:
         temp_dir += '/'
         save_detector(det, temp_dir)
-        det_load = load_detector(temp_dir)
+        if isinstance(det, (KSDrift, MMDDrift)):
+            det_load = load_detector(temp_dir, **{'preprocess_kwargs': preprocess_kwargs})
+        else:
+            det_load = load_detector(temp_dir)
         det_load_name = det_load.meta['name']
         assert det_load_name == det_name
 
@@ -137,7 +145,7 @@ def test_save_load(select_detector):
         if type(det_load) in [OutlierVAE, OutlierVAEGMM]:
             assert det_load.samples == det.samples == samples
 
-        if type(det_load) == AdversarialAE:
+        if type(det_load) == AdversarialAE or type(det_load) == ModelDistillation:
             for layer in det_load.model.layers:
                 assert not layer.trainable
 
@@ -165,6 +173,10 @@ def test_save_load(select_detector):
             assert isinstance(det_load.ae.encoder.encoder_net, tf.keras.Sequential)
             assert isinstance(det_load.ae.decoder.decoder_net, tf.keras.Sequential)
             assert isinstance(det_load.ae, tf.keras.Model)
+        elif type(det_load) == ModelDistillation:
+            assert isinstance(det_load.model, tf.keras.Sequential) or isinstance(det_load.model, tf.keras.Model)
+            assert (isinstance(det_load.distilled_model, tf.keras.Sequential) or
+                    isinstance(det_load.distilled_model, tf.keras.Model))
         elif type(det_load) == OutlierVAE:
             assert isinstance(det_load.vae.encoder.encoder_net, tf.keras.Sequential)
             assert isinstance(det_load.vae.decoder.decoder_net, tf.keras.Sequential)
@@ -191,8 +203,7 @@ def test_save_load(select_detector):
             assert det_load.shape == (-1, seq_len, input_dim)
         elif type(det_load) in [KSDrift, MMDDrift]:
             assert isinstance(det_load.preprocess_fn, Callable)
-            assert det_load.preprocess_fn.__name__ == 'uae'
-            assert isinstance(det_load.preprocess_kwargs['encoder_net'], tf.keras.Sequential)
+            assert det_load.preprocess_fn.func.__name__ == 'preprocess_drift'
             assert det_load.p_val == p_val
             assert (det_load.X_ref == X_ref).all()
         elif type(det_load) == LLR:

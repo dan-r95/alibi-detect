@@ -7,7 +7,7 @@ from tensorflow.python.keras import backend
 from typing import Tuple, Union
 from urllib.request import urlopen
 from alibi_detect.base import BaseDetector
-from alibi_detect.ad import AdversarialAE
+from alibi_detect.ad import AdversarialAE, ModelDistillation
 from alibi_detect.models import PixelCNN
 from alibi_detect.od import (IForest, LLR, Mahalanobis, OutlierAE, OutlierAEGMM, OutlierProphet,
                              OutlierSeq2Seq, OutlierVAE, OutlierVAEGMM, SpectralResidual)
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 Data = Union[
     BaseDetector,
     AdversarialAE,
+    ModelDistillation,
     IForest,
     LLR,
     Mahalanobis,
@@ -30,22 +31,25 @@ Data = Union[
     SpectralResidual
 ]
 
-dist = PixelCNN(
-    image_shape=(28, 28, 1),
-    num_resnet=5,
-    num_hierarchies=2,
-    num_filters=32,
-    num_logistic_mix=1,
-    receptive_field_dims=(3, 3),
-    dropout_p=.3,
-    l2_weight=0.
-)
 
-KWARGS_PIXELCNN = {
-    'dist_s': dist,
-    'dist_b': dist.copy(),
-    'input_shape': (28, 28, 1)
-}
+def get_pixelcnn_default_kwargs():
+    dist = PixelCNN(
+        image_shape=(28, 28, 1),
+        num_resnet=5,
+        num_hierarchies=2,
+        num_filters=32,
+        num_logistic_mix=1,
+        receptive_field_dims=(3, 3),
+        dropout_p=.3,
+        l2_weight=0.
+    )
+
+    KWARGS_PIXELCNN = {
+        'dist_s': dist,
+        'dist_b': dist.copy(),
+        'input_shape': (28, 28, 1)
+    }
+    return KWARGS_PIXELCNN
 
 
 def fetch_tf_model(dataset: str, model: str) -> tf.keras.Model:
@@ -181,6 +185,32 @@ def fetch_ad_ae(url: str, filepath: str, state_dict: dict) -> None:
                 os.path.join(model_path, hl + '.ckpt.data-00001-of-00002'),
                 os.path.join(url_models, hl + '.ckpt.data-00001-of-00002')
             )
+
+
+def fetch_ad_md(url: str, filepath: str) -> None:
+    """
+    Download model and distilled model.
+
+    Parameters
+    ----------
+    url
+        URL to fetch detector from.
+    filepath
+        Local directory to save detector to.
+    """
+    url_models = os.path.join(url, 'model')
+    model_path = os.path.join(filepath, 'model')
+    if not os.path.isdir(model_path):
+        os.mkdir(model_path)
+    # encoder and decoder
+    tf.keras.utils.get_file(
+        os.path.join(model_path, 'model.h5'),
+        os.path.join(url_models, 'model.h5')
+    )
+    tf.keras.utils.get_file(
+        os.path.join(model_path, 'distilled_model.h5'),
+        os.path.join(url_models, 'distilled_model.h5')
+    )
 
 
 def fetch_aegmm(url: str, filepath: str) -> None:
@@ -425,7 +455,7 @@ def fetch_detector(filepath: str,
 
     # load detector
     name = meta['name']
-    kwargs = {}
+    kwargs = {}  # type: dict
     if name == 'OutlierAE':
         fetch_ae(url, filepath)
     elif name == 'OutlierAEGMM':
@@ -440,9 +470,13 @@ def fetch_detector(filepath: str,
         fetch_ad_ae(url, filepath, state_dict)
         if model == 'resnet56':
             kwargs = {'custom_objects': {'backend': backend}}
+    elif name == 'ModelDistillation':
+        fetch_ad_md(url, filepath)
+        if model == 'resnet56':
+            kwargs = {'custom_objects': {'backend': backend}}
     elif name == 'LLR':
         model_type = fetch_llr(url, filepath)
         if model_type == 'weights':
-            kwargs = KWARGS_PIXELCNN
+            kwargs = get_pixelcnn_default_kwargs()
     detector = load_detector(filepath, **kwargs)
     return detector

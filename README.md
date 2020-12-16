@@ -2,7 +2,7 @@
   <img src="doc/source/_static/Alibi_Detect_Logo.png" alt="Alibi Detect Logo" width="50%">
 </p>
 
-[![Build Status](https://travis-ci.com/SeldonIO/alibi-detect.svg?branch=master)](https://travis-ci.com/SeldonIO/alibi-detect)
+[![Build Status](https://github.com/SeldonIO/alibi-detect/workflows/CI/badge.svg?branch=master)](https://github.com/SeldonIO/alibi-detect/actions?query=workflow%3A%22CI%22)
 [![Documentation Status](https://readthedocs.org/projects/alibi-detect/badge/?version=latest)](https://docs.seldon.io/projects/alibi-detect/en/latest/?badge=latest)
 ![Python version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)
 [![PyPI version](https://badge.fury.io/py/alibi-detect.svg)](https://badge.fury.io/py/alibi-detect)
@@ -10,9 +10,11 @@
 [![Slack channel](https://img.shields.io/badge/chat-on%20slack-e51670.svg)](http://seldondev.slack.com/messages/alibi)
 ---
 
-[alibi-detect](https://github.com/SeldonIO/alibi-detect) is an open source Python library focused on outlier, adversarial and concept drift detection. The package aims to cover both online and offline detectors for tabular data, images and time series. The outlier detection methods should allow the user to identify global, contextual and collective outliers.
+[Alibi Detect](https://github.com/SeldonIO/alibi-detect) is an open source Python library focused on outlier, adversarial and drift detection. The package aims to cover both online and offline detectors for tabular data, text, images and time series. The outlier detection methods should allow the user to identify global, contextual and collective outliers.
 
 *  [Documentation](https://docs.seldon.io/projects/alibi-detect/en/latest/)
+
+For more background on the importance of monitoring outliers and distributions in a production setting, check out [this talk](https://slideslive.com/38931758/monitoring-and-explainability-of-models-in-production?ref=speaker-37384-latest) from the *Challenges in Deploying and Monitoring Machine Learning Systems* ICML 2020 workshop, based on the paper [Monitoring and explainability of models in production](https://arxiv.org/abs/2007.06299) and referencing Alibi Detect.
 
 ## Table of Contents
 
@@ -85,17 +87,18 @@ The following tables show the advised use cases for each algorithm. The column *
 
 ### Adversarial Detection
 
-| Detector          | Tabular | Image | Time Series | Text  | Categorical Features | Online | Feature Level |
-| :---              |  :---:  | :---: |   :---:     | :---: |   :---:              | :---:  | :---:         |
-| Adversarial AE    | ✔       | ✔     |  ✘          |  ✘    |  ✘                   |  ✘     |  ✘            |
+| Detector           | Tabular | Image | Time Series | Text  | Categorical Features | Online | Feature Level |
+| :---               |  :---:  | :---: |   :---:     | :---: |   :---:              | :---:  | :---:         |
+| Adversarial AE     | ✔       | ✔     |  ✘          |  ✘    |  ✘                   |  ✘     |  ✘            |
+| Model distillation | ✔       | ✔     |  ✔          |  ✔    |  ✔                   |  ✘     |  ✘            |
 
 
 ### Drift Detection
 
 | Detector                 | Tabular | Image | Time Series | Text  | Categorical Features | Online | Feature Level |
 | :---                     |  :---:  | :---: |   :---:     | :---: |   :---:              | :---:  | :---:         |
-| Kolmogorov-Smirnov       | ✔       | ✔     |  ✘          |  ✘    |  ✔                   |  ✔     |  ✔            |
-| Maximum Mean Discrepancy | ✔       | ✔     |  ✘          |  ✘    |  ✔                   |  ✘     |  ✘            |
+| Kolmogorov-Smirnov       | ✔       | ✔     |  ✘          |  ✔    |  ✔                   |  ✔     |  ✔            |
+| Maximum Mean Discrepancy | ✔       | ✔     |  ✘          |  ✔    |  ✔                   |  ✘     |  ✘            |
 
 
 ### Reference List
@@ -137,14 +140,16 @@ The following tables show the advised use cases for each algorithm. The column *
 
 - [Adversarial Auto-Encoder](https://docs.seldon.io/projects/alibi-detect/en/latest/methods/adversarialae.html) ([Vacanti and Van Looveren, 2020](https://arxiv.org/abs/2002.09364))
    - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/ad_ae_cifar10.html)
+- [Model distillation](https://docs.seldon.io/projects/alibi-detect/en/latest/methods/modeldistillation.html) 
+   - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_distillation_cifar10.html)
      
 #### Drift Detection
 
 - [Kolmogorov-Smirnov](https://docs.seldon.io/projects/alibi-detect/en/latest/methods/ksdrift.html)
-   - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_ks_cifar10.html)
+   - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_ks_cifar10.html), [movie reviews](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_text_imdb.html)
    
 - [Maximum Mean Discrepancy](https://docs.seldon.io/projects/alibi-detect/en/latest/methods/mmddrift.html) ([Gretton et al, 2012](http://jmlr.csail.mit.edu/papers/v13/gretton12a.html))
-   - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_mmd_cifar10.html)
+   - Example: [CIFAR10](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_mmd_cifar10.html), [movie reviews](https://docs.seldon.io/projects/alibi-detect/en/latest/examples/cd_text_imdb.html)
 
 ## Datasets
 
@@ -228,8 +233,7 @@ The integrations folder contains various wrapper tools to allow the alibi-detect
 
 ```bash
 creme
-fbprophet
-holidays
+dask[array]
 matplotlib
 numpy
 pandas
@@ -240,6 +244,13 @@ scikit-image
 scikit-learn
 tensorflow>=2.0.0
 tensorflow_probability>=0.8
+transformers>=2.10.0
+```
+
+Extra dependencies for `OutlierProphet` (install via `pip install alibi-detect[prophet]`):
+```bash
+fbprophet>=0.5,<0.7
+holidays==0.9.11
 ```
 
 ## Citations
@@ -252,7 +263,8 @@ BibTeX entry:
   title = {{Alibi-Detect}: Algorithms for outlier and adversarial instance detection, concept drift and metrics.},
   author = {Van Looveren, Arnaud and Vacanti, Giovanni and Klaise, Janis and Coca, Alexandru},
   url = {https://github.com/SeldonIO/alibi-detect},
-  version = {0.4.1},
-  date = {2020-05-12},
+  version = {0.4.3},
+  date = {2020-10-08},
+  year = {2019}
 }
 ```

@@ -26,7 +26,7 @@ alibi_detect.od.__all__
  'OutlierAE',
  'OutlierVAE',
  'OutlierVAEGMM',
- 'OutlierProphet',
+ 'OutlierProphet',  # requires prophet: pip install alibi-detect[prophet]
  'OutlierSeq2Seq',
  'SpectralResidual',
  'LLR']
@@ -37,7 +37,8 @@ alibi_detect.ad.__all__
 ```
 
 ```
-['AdversarialAE']
+['AdversarialAE',
+'ModelDistillation']
 ```
 
 ```python
@@ -76,6 +77,7 @@ For detailed information on the **outlier detectors**:
 Similar for **adversarial detection**:
 
 * [Adversarial AE Detector](../methods/adversarialae.ipynb)
+* [Model Distillation Detector](../methods/modeldistillation.ipynb)
 
 And **data drift**:
     
